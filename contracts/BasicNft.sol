@@ -6,7 +6,8 @@ pragma solidity ^0.8.8;
 contract BasicNft is ERC721 {
     error NotExisted();
 
-    string public constant = TOKEN_URI = "ipfs://bafybeig37ioir76s7mg5oobetncojcm3c3hxasyd4rvid4jqhy4gkaheg4/?filename=0-PUG.json";
+    string public constant TOKEN_URI =
+        "ipfs://bafybeig37ioir76s7mg5oobetncojcm3c3hxasyd4rvid4jqhy4gkaheg4/?filename=0-PUG.json";
 
     uint256 private s_tokenCounter;
 
@@ -17,7 +18,12 @@ contract BasicNft is ERC721 {
         s_tokenCounter += 1;
     }
 
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
         if (!_exists(tokenId)) {
             revert NotExisted();
         }
