@@ -6,14 +6,14 @@ pragma solidity ^0.8.8;
 
 error TokenNotExisted();
 
-contract BasicNft is ERC721URIStorage {
+contract BasicNFT is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private s_tokenCounter;
 
     string private constant TOKEN_URI =
         "ipfs://bafybeig37ioir76s7mg5oobetncojcm3c3hxasyd4rvid4jqhy4gkaheg4/?filename=0-PUG.json";
 
-    constructor() ERC721("Dogie", "DOG") {}
+    constructor() ERC721("Warrior Club", "WRC") {}
 
     function mintNft() external {
         uint256 newTokenId = s_tokenCounter.current();
