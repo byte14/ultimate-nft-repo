@@ -12,13 +12,13 @@ network.config.chainId !== 31337
       beforeEach(async function () {
         deployer = (await getNamedAccounts()).deployer;
         await deployments.fixture(["all"]);
-        basicNft = await ethers.getContract("BasicNft", deployer);
+        basicNft = await ethers.getContract("BasicNFT", deployer);
       });
 
       describe("constructor", function () {
         it("initializes the basicNft correctly", async function () {
-          expect(await basicNft.name()).to.equal("Dogie");
-          expect(await basicNft.symbol()).to.equal("DOG");
+          expect(await basicNft.name()).to.equal("Warrior Club");
+          expect(await basicNft.symbol()).to.equal("WRC");
         });
       });
 
@@ -42,7 +42,7 @@ network.config.chainId !== 31337
         it("reverts if tokenId does not exists", async function () {
           await expect(basicNft.tokenURI(0)).to.be.revertedWithCustomError(
             basicNft,
-            "NotExisted"
+            "TokenNotExisted"
           );
         });
 
