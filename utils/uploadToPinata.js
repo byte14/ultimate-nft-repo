@@ -1,32 +1,32 @@
 const pinataSDK = require("@pinata/sdk");
 const path = require("path");
 const fs = require("fs");
-const { ethers } = require("hardhat");
 
 const pinataApiKey = process.env.PINATA_API_KEY;
 const pinataApiSecret = process.env.PINATA_API_SECRET;
 const pinata = pinataSDK(pinataApiKey, pinataApiSecret);
 
-async function storeImages(imagesFilePath) {
-  const fullImagesPath = path.resolve(imagesFilePath);
-  const files = fs.readdirSync(fullImagesPath);
-  let responses = [];
-  console.log("Uploading to IPFS...");
-  for (fileIndex in files) {
+async function storeImages(imagesPath) {
+  const absolutePath = path.resolve(imagesPath);
+  const files = fs.readdirSync(absolutePath);
+  let imageResponses = [];
+
+  for (const value of files) {
     const readableStreamForFile = fs.createReadStream(
-      `${fullImagesPath}/${files[fileIndex]}`
+      `${absolutePath}/${value}`
     );
+    console.log(`Uploading ${value} to IPFS...`);
     try {
       const response = await pinata.pinFileToIPFS(readableStreamForFile);
-      responses.push(response);
+      imageResponses.push(response);
     } catch (error) {
       console.log(error);
     }
   }
-  return { responses, files };
+  return { imageResponses, files };
 }
 
-async function storeTokenUriMetadata(metadata) {
+async function storeMetadata(metadata) {
   try {
     const response = await pinata.pinJSONToIPFS(metadata);
     return response;
@@ -36,4 +36,4 @@ async function storeTokenUriMetadata(metadata) {
   return null;
 }
 
-module.exports = { storeImages, storeTokenUriMetadata };
+module.exports = { storeImages, storeMetadata };
