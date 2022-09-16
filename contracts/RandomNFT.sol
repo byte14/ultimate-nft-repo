@@ -9,7 +9,6 @@ import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 pragma solidity ^0.8.8;
 
 error NotEnoughETH(uint256 sent, uint256 required);
-error RangeOutOfBounds();
 error WithdrawFailed();
 
 contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
@@ -84,7 +83,7 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     function _getWarrior(uint256[] memory randomWords)
         private
         pure
-        returns (Warrior)
+        returns (Warrior warrior)
     {
         uint8[3] memory warriorRarityWeight = [15, 35, 50];
         uint256 sumOfRarityWeight = 100; // 15 + 35 + 55
@@ -98,14 +97,15 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
                  * (15 - 49) get Balbhadra Kunwar (35%),
                  * (50 - 99) get Amar Singh Thapa (50%)
                  */
-                return Warrior(i);
+                warrior = Warrior(i);
+                break;
             }
             warriorRarityRange -= warriorRarityWeight[i];
         }
-        revert RangeOutOfBounds();
+        return warrior;
     }
 
-    function withdrawCollectedFee() public onlyOwner {
+    function withdraw() public onlyOwner {
         (bool success, ) = msg.sender.call{value: address(this).balance}("");
         if (!success) {
             revert WithdrawFailed();
