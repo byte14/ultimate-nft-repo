@@ -6,21 +6,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.12;
 
 error NotEnoughETH(uint256 sent, uint256 required);
 error WithdrawFailed();
 
 contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     using Counters for Counters.Counter;
+    using Strings for uint256;
 
     Counters.Counter private s_tokenCounter;
-    enum Warrior {
-        PRITHVI_NARAYAN_SHAH,
-        BALBHADRA_KUNWAR,
-        AMAR_SING_THAPA
-    }
-
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     uint256 private immutable i_mintFee;
     bytes32 private immutable i_keyHash;
@@ -28,12 +23,13 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     uint32 private immutable i_callbackGasLimit;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
-    string[3] private s_tokenURIs;
+    string private constant BASE_EXTENSION = ".json";
+    string private s_baseURI;
 
     mapping(uint256 => address) private nftRequester;
 
     event NftRequested(uint256 indexed requestId, address requester);
-    event NftMinted(Warrior warrior, address minter);
+    event NftMinted(uint256 tokenId, address minter);
 
     constructor(
         address vrfCoordinator,
@@ -41,14 +37,14 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         bytes32 keyHash,
         uint64 subscriptionId,
         uint32 callbackGasLimit,
-        string[3] memory tokenURIs
+        string memory baseURI
     ) ERC721("Warrior Club", "WRC") VRFConsumerBaseV2(vrfCoordinator) {
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator);
         i_mintFee = mintFee;
         i_keyHash = keyHash;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
-        s_tokenURIs = tokenURIs;
+        s_baseURI = baseURI;
     }
 
     function requestNft() external payable returns (uint256 requestId) {
@@ -72,18 +68,17 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     {
         address nftOwner = nftRequester[requestId];
         uint256 newTokenId = s_tokenCounter.current();
-
-        Warrior warrior = _getWarrior(randomWords);
+        string memory warrior = _getWarrior(randomWords);
         _safeMint(nftOwner, newTokenId);
-        _setTokenURI(newTokenId, s_tokenURIs[uint256(warrior)]);
+        _setTokenURI(newTokenId, warrior);
         s_tokenCounter.increment();
-        emit NftMinted(warrior, nftOwner);
+        emit NftMinted(newTokenId, nftOwner);
     }
 
     function _getWarrior(uint256[] memory randomWords)
-        private
+        public
         pure
-        returns (Warrior warrior)
+        returns (string memory warrior)
     {
         uint8[3] memory warriorRarityWeight = [15, 35, 50];
         uint256 sumOfRarityWeight = 100; // 15 + 35 + 55
@@ -97,7 +92,7 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
                  * (15 - 49) get Balbhadra Kunwar (35%),
                  * (50 - 99) get Amar Singh Thapa (50%)
                  */
-                warrior = Warrior(i);
+                warrior = string.concat(i.toString(), BASE_EXTENSION);
                 break;
             }
             warriorRarityRange -= warriorRarityWeight[i];
@@ -105,7 +100,11 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         return warrior;
     }
 
-    function withdraw() public onlyOwner {
+    function _baseURI() internal view override returns (string memory) {
+        return s_baseURI;
+    }
+
+    function withdraw() external onlyOwner {
         (bool success, ) = msg.sender.call{value: address(this).balance}("");
         if (!success) {
             revert WithdrawFailed();
@@ -114,14 +113,6 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
 
     function getMintFee() external view returns (uint256) {
         return i_mintFee;
-    }
-
-    function getTokenURI(Warrior warrior)
-        external
-        view
-        returns (string memory)
-    {
-        return s_tokenURIs[uint256(warrior)];
     }
 
     function getTokenCounter() external view returns (uint256) {
