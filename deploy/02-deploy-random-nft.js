@@ -1,27 +1,16 @@
 const { network, ethers } = require("hardhat");
 const { networkConfig } = require("../helper-hardhat-config");
 const { verify } = require("../utils/verify");
-const { storeImages, storeMetadata } = require("../utils/uploadToPinata");
+const { generateMetadata } = require("../utils/generateMetadata");
+const {
+  uploadImagesFolder,
+  uploadMetadataFolder,
+} = require("../utils/uploadToPinata");
 
 const FUND_AMOUNT = ethers.utils.parseEther("2");
-const imagesLocation = "images/randomNFT";
-let tokenURIs = [
-  "ipfs://Qmb8PvWReEe8a5ViHQgNnB7ojCrn8yxxPWLkGdYc2spvg1",
-  "ipfs://QmenjrBys2xVVbCwKrkFdQKwgUzJo7frynmwEwbqXXDCHQ",
-  "ipfs://QmRoFCAE9VQGZejwY8VkHah6pJ3DVvRhZZAKbBWcBusjRx",
-];
-
-const metadataTemplate = {
-  name: "",
-  description: "",
-  image: "",
-  attributes: [
-    {
-      trait_type: "Powerful",
-      value: 100,
-    },
-  ],
-};
+const imagesPath = "./build/images";
+const metadataPath = "./build/metadata";
+let baseURI;
 
 module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deploy, log } = deployments;
@@ -31,7 +20,12 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   let subscriptionId;
 
   if (process.env.UPLOAD_TO_PINATA === "true") {
-    tokenURIs = await handleTokenURIs();
+    console.log("Uploading images folder to IPFS...");
+    baseURI = await uploadImagesFolder(imagesPath);
+    console.log("Generating metadata for the images...");
+    generateMetadata(baseURI, imagesPath, metadataPath);
+    console.log("Uploading metadata folder to IPFS...");
+    await uploadMetadataFolder(metadataPath);
   }
 
   if (chainId === 31337) {
@@ -58,7 +52,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     keyHash,
     subscriptionId,
     callbackGasLimit,
-    tokenURIs,
+    baseURI,
   ];
 
   const randomNFT = await deploy("RandomNFT", {
@@ -71,24 +65,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   if (chainId !== 31337 && process.env.ETHERSCAN_API_KEY) {
     await verify(randomNFT.address, arguments);
   }
-
-  async function handleTokenURIs() {
-    tokenURIs = [];
-    const { imageResponses, files } = await storeImages(imagesLocation);
-    for (const index in imageResponses) {
-      let metadata = { ...metadataTemplate };
-      metadata.name = files[index].replace(".png", "");
-      metadata.description = `A fierce warrior: ${metadata.name}`;
-      metadata.image = `ipfs://${imageResponses[index].IpfsHash}`;
-
-      console.log(`Uploading metadata of ${metadata.name}`);
-      const metadataResponse = await storeMetadata(metadata);
-      tokenURIs.push(`ipfs://${metadataResponse.IpfsHash}`);
-    }
-    console.log(`Token URIs stored! They are:`);
-    console.log(tokenURIs);
-    return tokenURIs;
-  }
+  log("______________________________________________________");
 };
 
 module.exports.tags = ["all", "randomNFT"];

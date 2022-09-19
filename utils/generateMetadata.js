@@ -2,18 +2,16 @@ const fs = require("fs");
 const path = require("path");
 
 const names = ["PNS", "BK", "AST"];
-const metadataPath = "./NFT/metadata";
 
-function generateMetadata(baseURL, imagesPath) {
+function generateMetadata(baseURI, imagesPath, metadataPath) {
   const absolutePath = path.resolve(imagesPath);
   const files = fs.readdirSync(absolutePath);
 
-  console.log("Generating metadata for the images...");
   for (const index in files) {
     const metadata = {
       name: names[index],
-      description: `${this.name}, a fierce warrior from Warrior Club`,
-      image: `${baseURL}/${index}.png`,
+      description: `${names[index]}, a fierce warrior from Warrior Club`,
+      image: `${baseURI}/${index}.png`,
     };
 
     fs.writeFileSync(

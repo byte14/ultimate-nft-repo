@@ -16,7 +16,7 @@ const networkConfig = {
     mintFee: ethers.utils.parseEther("0.01"),
     keyHash:
       "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15",
-    callbackGasLimit: "100000",
+    callbackGasLimit: "200000",
   },
 };
 
