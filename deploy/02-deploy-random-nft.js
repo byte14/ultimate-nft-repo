@@ -8,9 +8,10 @@ const {
 } = require("../utils/uploadToPinata");
 
 const FUND_AMOUNT = ethers.utils.parseEther("2");
-const imagesPath = "./build/images";
-const metadataPath = "./build/metadata";
-let baseURI;
+const imagesFolderPath = "./build/images";
+const metadataFolderPath = "./build/metadata";
+let metadataBaseURI =
+  "https://gateway.pinata.cloud/ipfs/QmNcNgWVHbdvNcL4bB2weJytmtEb2A6NtB1mmFMZVTKZTd/";
 
 module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deploy, log } = deployments;
@@ -19,13 +20,19 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   let vrfCoordinatorV2Address;
   let subscriptionId;
 
+  /**
+   * @dev 'metadataBaseURI' can be hardcoded and
+   * 'UPLOAD_TO_PINATA' can be set to false in '.env',
+   * after running this deploy script once.
+   */
   if (process.env.UPLOAD_TO_PINATA === "true") {
     console.log("Uploading images folder to IPFS...");
-    baseURI = await uploadImagesFolder(imagesPath);
+    const imagesBaseURI = await uploadImagesFolder(imagesFolderPath);
     console.log("Generating metadata for the images...");
-    generateMetadata(baseURI, imagesPath, metadataPath);
+    generateMetadata(imagesBaseURI, imagesFolderPath, metadataFolderPath);
     console.log("Uploading metadata folder to IPFS...");
-    await uploadMetadataFolder(metadataPath);
+    metadataBaseURI = await uploadMetadataFolder(metadataFolderPath);
+    console.log(metadataBaseURI);
   }
 
   if (chainId === 31337) {
@@ -52,7 +59,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     keyHash,
     subscriptionId,
     callbackGasLimit,
-    baseURI,
+    metadataBaseURI,
   ];
 
   const randomNFT = await deploy("RandomNFT", {

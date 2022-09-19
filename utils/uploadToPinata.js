@@ -5,24 +5,25 @@ const pinataApiSecret = process.env.PINATA_API_SECRET;
 const pinata = pinataSDK(pinataApiKey, pinataApiSecret);
 
 async function uploadImagesFolder(sourcePath) {
-  let baseURI;
+  let imagesBaseURI;
   try {
     const response = await pinata.pinFromFS(sourcePath);
-    baseURI = `https://gateway.pinata.cloud/ipfs/${response.IpfsHash}`;
+    imagesBaseURI = `https://gateway.pinata.cloud/ipfs/${response.IpfsHash}/`;
   } catch (error) {
     console.log(error);
   }
-  return baseURI;
+  return imagesBaseURI;
 }
 
 async function uploadMetadataFolder(sourcePath) {
+  let metadataBaseURI;
   try {
     const response = await pinata.pinFromFS(sourcePath);
-    return response;
+    metadataBaseURI = `https://gateway.pinata.cloud/ipfs/${response.IpfsHash}/`;
   } catch (error) {
     console.log(error);
   }
-  return null;
+  return metadataBaseURI;
 }
 
 module.exports = { uploadImagesFolder, uploadMetadataFolder };

@@ -1,8 +1,9 @@
 const { expect } = require("chai");
-const { deployments, getNamedAccounts, ethers, network } = require("hardhat");
+const { deployments, ethers, network } = require("hardhat");
 const { networkConfig } = require("../../helper-hardhat-config");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 
+const BASE_URI =
+  "https://gateway.pinata.cloud/ipfs/QmNcNgWVHbdvNcL4bB2weJytmtEb2A6NtB1mmFMZVTKZTd/";
 const chainId = network.config.chainId;
 
 chainId !== 31337
@@ -22,10 +23,6 @@ chainId !== 31337
       describe("constructor", function () {
         it("initializes the mint fee correctly", async function () {
           expect(await randomNFT.getMintFee()).to.equal(mintFee);
-        });
-
-        it("initializes the token URIs correctly", async function () {
-          expect(await randomNFT.getTokenURI(0)).to.include("ipfs://");
         });
       });
 
@@ -77,7 +74,7 @@ chainId !== 31337
             randomNFT.address
           );
           const tokenURI = await randomNFT.tokenURI(tokenId);
-          expect(tokenURI).to.include("ipfs://");
+          expect(tokenURI).to.include(BASE_URI);
         });
 
         it("increases the token counter by 1", async function () {
@@ -91,6 +88,7 @@ chainId !== 31337
         });
 
         it("emits 'NftMinted' event", async function () {
+          const tokenId = await randomNFT.getTokenCounter();
           await expect(
             await vrfCoordinatorV2Mock.fulfillRandomWords(
               requestId,
@@ -98,7 +96,7 @@ chainId !== 31337
             )
           )
             .to.emit(randomNFT, "NftMinted")
-            .withArgs(anyValue, deployer.address);
+            .withArgs(tokenId, deployer.address);
         });
       });
 
@@ -137,6 +135,25 @@ chainId !== 31337
           await expect(
             randomNFT.connect(accounts[1]).withdraw()
           ).to.be.revertedWith("Ownable: caller is not the owner");
+        });
+      });
+
+      // To make this test passed, _getWarrior function need
+      // to be marked as public/external in randomNFT contract
+      describe("_getWarrior", function () {
+        it("should return PNS if warriorRarityRange is between 0 - 14", async function () {
+          const warrior = await randomNFT._getWarrior([9]);
+          expect(warrior).to.equal("0.json");
+        });
+
+        it("should return BK if warriorRarityRange is between 15 - 49", async function () {
+          const warrior = await randomNFT._getWarrior([40]);
+          expect(warrior).to.equal("1.json");
+        });
+
+        it("should return AST if warriorRarityRange is between 50 - 99", async function () {
+          const warrior = await randomNFT._getWarrior([95]);
+          expect(warrior).to.equal("2.json");
         });
       });
     });

@@ -3,7 +3,7 @@ const path = require("path");
 
 const names = ["PNS", "BK", "AST"];
 
-function generateMetadata(baseURI, imagesPath, metadataPath) {
+function generateMetadata(imagesBaseURI, imagesPath, metadataPath) {
   const absolutePath = path.resolve(imagesPath);
   const files = fs.readdirSync(absolutePath);
 
@@ -11,7 +11,7 @@ function generateMetadata(baseURI, imagesPath, metadataPath) {
     const metadata = {
       name: names[index],
       description: `${names[index]}, a fierce warrior from Warrior Club`,
-      image: `${baseURI}/${index}.png`,
+      image: `${imagesBaseURI}${index}.png`,
     };
 
     fs.writeFileSync(
