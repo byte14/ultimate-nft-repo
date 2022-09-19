@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
-
-pragma solidity ^0.8.12;
 
 error NotEnoughETH(uint256 sent, uint256 required);
 error WithdrawFailed();
@@ -62,6 +61,21 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         emit NftRequested(requestId, msg.sender);
     }
 
+    function withdraw() external onlyOwner {
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        if (!success) {
+            revert WithdrawFailed();
+        }
+    }
+
+    function getMintFee() external view returns (uint256) {
+        return i_mintFee;
+    }
+
+    function getTokenCounter() external view returns (uint256) {
+        return s_tokenCounter.current();
+    }
+
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
         internal
         override
@@ -75,8 +89,12 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         emit NftMinted(newTokenId, nftOwner);
     }
 
+    function _baseURI() internal view override returns (string memory) {
+        return s_baseURI;
+    }
+
     function _getWarrior(uint256[] memory randomWords)
-        public
+        private
         pure
         returns (string memory warrior)
     {
@@ -98,24 +116,5 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
             warriorRarityRange -= warriorRarityWeight[i];
         }
         return warrior;
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return s_baseURI;
-    }
-
-    function withdraw() external onlyOwner {
-        (bool success, ) = msg.sender.call{value: address(this).balance}("");
-        if (!success) {
-            revert WithdrawFailed();
-        }
-    }
-
-    function getMintFee() external view returns (uint256) {
-        return i_mintFee;
-    }
-
-    function getTokenCounter() external view returns (uint256) {
-        return s_tokenCounter.current();
     }
 }

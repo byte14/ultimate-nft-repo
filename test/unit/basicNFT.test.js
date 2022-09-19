@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { deployments, getNamedAccounts, ethers, network } = require("hardhat");
+const { deployments, ethers, network } = require("hardhat");
 
 network.config.chainId !== 31337
   ? describe.skip
@@ -7,12 +7,12 @@ network.config.chainId !== 31337
       let deployer;
       let basicNft;
       const TOKEN_URI =
-        "ipfs://bafybeig37ioir76s7mg5oobetncojcm3c3hxasyd4rvid4jqhy4gkaheg4/?filename=0-PUG.json";
+        "https://gateway.pinata.cloud/ipfs/QmNcNgWVHbdvNcL4bB2weJytmtEb2A6NtB1mmFMZVTKZTd/0.json";
 
       beforeEach(async function () {
-        deployer = (await getNamedAccounts()).deployer;
-        await deployments.fixture(["all"]);
-        basicNft = await ethers.getContract("BasicNFT", deployer);
+        [deployer] = await ethers.getSigners();
+        await deployments.fixture(["basicNFT"]);
+        basicNft = await ethers.getContract("BasicNFT");
       });
 
       describe("constructor", function () {
@@ -27,7 +27,7 @@ network.config.chainId !== 31337
           const mintNftTxResponse = await basicNft.mintNft();
           const mintNftTxReceipt = await mintNftTxResponse.wait(1);
           const tokenId = mintNftTxReceipt.events[0].args.tokenId;
-          expect(await basicNft.ownerOf(tokenId)).to.equal(deployer);
+          expect(await basicNft.ownerOf(tokenId)).to.equal(deployer.address);
         });
 
         it("increases the token counter by 1", async function () {
