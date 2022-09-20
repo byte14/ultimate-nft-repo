@@ -21,6 +21,14 @@ chainId !== 31337
       });
 
       describe("constructor", function () {
+        it("initializes the name correctly", async function () {
+          expect(await randomNFT.name()).to.equal("Warrior Club");
+        });
+
+        it("initializes the symbol correctly", async function () {
+          expect(await randomNFT.symbol()).to.equal("WRC");
+        });
+
         it("initializes the mint fee correctly", async function () {
           expect(await randomNFT.getMintFee()).to.equal(mintFee);
         });
