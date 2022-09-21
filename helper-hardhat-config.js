@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 const networkConfig = {
   5: {
     name: "goerli",
+    ethUsdPriceFeed: "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e",
     vrfCoordinatorV2: "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
     mintFee: ethers.utils.parseEther("0.01"),
     keyHash:

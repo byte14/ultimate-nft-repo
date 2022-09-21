@@ -26,13 +26,13 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
    * after running this deploy script once.
    */
   if (process.env.UPLOAD_TO_PINATA === "true") {
-    console.log("Uploading images folder to IPFS...");
+    log("Uploading images folder to IPFS...");
     const imagesBaseURI = await uploadImagesFolder(imagesFolderPath);
-    console.log("Generating metadata for the images...");
+    log("Generating metadata for the images...");
     generateMetadata(imagesBaseURI, imagesFolderPath, metadataFolderPath);
-    console.log("Uploading metadata folder to IPFS...");
+    log("Uploading metadata folder to IPFS...");
     metadataBaseURI = await uploadMetadataFolder(metadataFolderPath);
-    console.log(metadataBaseURI);
+    log(metadataBaseURI);
   }
 
   if (chainId === 31337) {

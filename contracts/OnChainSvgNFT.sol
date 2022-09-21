@@ -39,6 +39,18 @@ contract OnChainSvgNFT is ERC721 {
         emit NftMinted(newTokenId, msg.sender);
     }
 
+    function getTokenCounter() external view returns (uint256) {
+        return s_tokenCounter.current();
+    }
+
+    function getImageURI(uint256 index) external view returns (string memory) {
+        return s_imagesURIs[index];
+    }
+
+    function getPriceFeed() external view returns (AggregatorV3Interface) {
+        return i_priceFeed;
+    }
+
     function tokenURI(uint256 tokenId)
         public
         view
@@ -95,13 +107,5 @@ contract OnChainSvgNFT is ERC721 {
             );
             s_imagesURIs.push(imageURI);
         }
-    }
-
-    function getTokenCounter() external view returns (uint256) {
-        return s_tokenCounter.current();
-    }
-
-    function getImageURI(uint256 index) external view returns (string memory) {
-        return s_imagesURIs[index];
     }
 }
