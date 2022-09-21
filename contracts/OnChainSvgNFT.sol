@@ -12,15 +12,15 @@ contract OnChainSvgNFT is ERC721 {
     using Counters for Counters.Counter;
 
     struct TokenValue {
-        uint256 bullValue;
-        uint256 bearValue;
+        int256 bullValue;
+        int256 bearValue;
     }
 
     AggregatorV3Interface private immutable i_priceFeed;
     Counters.Counter private s_tokenCounter;
     string[] private s_imagesURIs;
 
-    mapping(uint256 => TokenValue) public s_tokenValues;
+    mapping(uint256 => TokenValue) private s_tokenValues;
 
     event NftMinted(uint256 indexed tokenId, address minter);
 
@@ -31,7 +31,7 @@ contract OnChainSvgNFT is ERC721 {
         svgToImageURI(svgs);
     }
 
-    function mintNFT(uint256 bullValue, uint256 bearValue) external {
+    function mintNFT(int256 bullValue, int256 bearValue) external {
         uint256 newTokenId = s_tokenCounter.current();
         s_tokenValues[newTokenId] = TokenValue(bullValue, bearValue);
         _safeMint(msg.sender, newTokenId);
@@ -51,6 +51,14 @@ contract OnChainSvgNFT is ERC721 {
         return i_priceFeed;
     }
 
+    function getTokenBullBearValue(uint256 tokenId)
+        external
+        view
+        returns (TokenValue memory)
+    {
+        return s_tokenValues[tokenId];
+    }
+
     function tokenURI(uint256 tokenId)
         public
         view
@@ -61,8 +69,7 @@ contract OnChainSvgNFT is ERC721 {
             revert TokenNotExisted();
         }
 
-        (, int256 _price, , , ) = i_priceFeed.latestRoundData();
-        uint256 price = uint256(_price * 1e10);
+        (, int256 price, , , ) = i_priceFeed.latestRoundData();
         TokenValue memory token = s_tokenValues[tokenId];
         string memory name;
         string memory description;
@@ -77,7 +84,7 @@ contract OnChainSvgNFT is ERC721 {
             name = "Bear";
             description = "Market is bearish";
             imageURI = imagesURIs[1];
-        } else if (price > token.bearValue && price < token.bullValue) {
+        } else {
             name = "Neutral";
             description = "Market is neutral";
             imageURI = imagesURIs[2];
