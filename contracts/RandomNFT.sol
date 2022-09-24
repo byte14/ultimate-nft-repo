@@ -46,7 +46,7 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         s_baseURI = baseURI;
     }
 
-    function requestNft() external payable returns (uint256 requestId) {
+    function requestNFT() external payable returns (uint256 requestId) {
         if (msg.value < i_mintFee) {
             revert NotEnoughETH(msg.value, i_mintFee);
         }
@@ -61,7 +61,7 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         emit NftRequested(requestId, msg.sender);
     }
 
-    function withdraw() external onlyOwner {
+    function withdrawFee() external onlyOwner {
         (bool success, ) = msg.sender.call{value: address(this).balance}("");
         if (!success) {
             revert WithdrawFailed();
@@ -106,9 +106,9 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
             if (warriorRarityRange < warriorRarityWeight[i]) {
                 /**
                  * if warriorRarityRange:
-                 * (0 - 14) get Prithvi Narayn Shah (15%),
-                 * (15 - 49) get Balbhadra Kunwar (35%),
-                 * (50 - 99) get Amar Singh Thapa (50%)
+                 * (0 - 14) get Ingvild (15%),
+                 * (15 - 49) get Agnar (35%),
+                 * (50 - 99) get Zander (50%)
                  */
                 warrior = string.concat(i.toString(), BASE_EXTENSION);
                 break;

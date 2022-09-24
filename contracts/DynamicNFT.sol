@@ -8,7 +8,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 error TokenNotExisted();
 
-contract OnChainSvgNFT is ERC721 {
+contract DynamicNFT is ERC721 {
     using Counters for Counters.Counter;
 
     struct TokenValue {
@@ -22,8 +22,6 @@ contract OnChainSvgNFT is ERC721 {
 
     mapping(uint256 => TokenValue) private s_tokenValues;
 
-    event NftMinted(uint256 indexed tokenId, address minter);
-
     constructor(address priceFeedAddress, string[3] memory svgs)
         ERC721("Bull Bear Neutral", "BBN")
     {
@@ -36,19 +34,18 @@ contract OnChainSvgNFT is ERC721 {
         s_tokenValues[newTokenId] = TokenValue(bullValue, bearValue);
         _safeMint(msg.sender, newTokenId);
         s_tokenCounter.increment();
-        emit NftMinted(newTokenId, msg.sender);
     }
 
     function getTokenCounter() external view returns (uint256) {
         return s_tokenCounter.current();
     }
 
-    function getImageURI(uint256 index) external view returns (string memory) {
-        return s_imagesURIs[index];
-    }
-
     function getPriceFeed() external view returns (AggregatorV3Interface) {
         return i_priceFeed;
+    }
+
+    function getImageURI(uint256 index) external view returns (string memory) {
+        return s_imagesURIs[index];
     }
 
     function getTokenBullBearValue(uint256 tokenId)
@@ -78,24 +75,24 @@ contract OnChainSvgNFT is ERC721 {
 
         if (price >= token.bullValue) {
             name = "Bull";
-            description = "Market is bullish";
+            description = "You are in a Bull market";
             imageURI = imagesURIs[0];
         } else if (price <= token.bearValue) {
             name = "Bear";
-            description = "Market is bearish";
+            description = "You are in a Bear market";
             imageURI = imagesURIs[1];
         } else {
             name = "Neutral";
-            description = "Market is neutral";
+            description = "You are in a Neutral market";
             imageURI = imagesURIs[2];
         }
 
         bytes memory dataURI = abi.encodePacked(
             '{"name":"',
             name,
-            '", "description":"',
+            '","description":"',
             description,
-            '", "image":"',
+            '","image":"',
             imageURI,
             '"}'
         );

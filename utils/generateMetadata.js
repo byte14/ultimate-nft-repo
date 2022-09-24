@@ -1,17 +1,16 @@
 const fs = require("fs");
-const path = require("path");
-
-const names = ["PNS", "BK", "AST"];
 
 function generateMetadata(imagesBaseURI, imagesPath, metadataPath) {
-  const absolutePath = path.resolve(imagesPath);
-  const files = fs.readdirSync(absolutePath);
+  const files = fs.readdirSync(imagesPath);
 
   for (const index in files) {
     const metadata = {
-      name: names[index],
-      description: `${names[index]}, a fierce warrior from Warrior Club`,
-      image: `${imagesBaseURI}${index}.png`,
+      name: files[index].slice(3, -4),
+      description: `${files[index].slice(
+        3,
+        -4
+      )}, a fierce warrior in a post Apocalyptic World`,
+      image: imagesBaseURI + files[index],
     };
 
     fs.writeFileSync(

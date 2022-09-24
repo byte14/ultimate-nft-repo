@@ -3,6 +3,8 @@ const { networkConfig } = require("../helper-hardhat-config");
 const { verify } = require("../utils/verify");
 const fs = require("fs");
 
+const svgsPath = "./build/dynamicNFT/";
+
 module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
@@ -16,7 +18,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     ethUSDPriceFeedAddress = networkConfig[chainId].ethUsdPriceFeed;
   }
 
-  const svgsPath = "./build/onChainSvgNFT/";
   let svgs = [];
   const files = fs.readdirSync(svgsPath);
   for (const svg of files) {
@@ -25,16 +26,16 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
   }
 
   const arguments = [ethUSDPriceFeedAddress, svgs];
-  const onChainSvgNFT = await deploy("OnChainSvgNFT", {
+  const dynamicNFT = await deploy("DynamicNFT", {
     from: deployer,
     args: arguments,
     log: true,
   });
 
   if (chainId !== 31337 && process.env.ETHERSCAN_API_KEY) {
-    await verify(onChainSvgNFT.address, arguments);
+    await verify(dynamicNFT.address, arguments);
   }
   log("______________________________________________________");
 };
 
-module.exports.tags = ["all", "onChainSvgNFT"];
+module.exports.tags = ["all", "dynamicNFT"];

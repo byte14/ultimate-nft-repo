@@ -8,20 +8,21 @@ const {
 } = require("../utils/uploadToPinata");
 
 const FUND_AMOUNT = ethers.utils.parseEther("2");
-const imagesFolderPath = "./build/images";
-const metadataFolderPath = "./build/metadata";
+const imagesFolderPath = "./build/randomNFT/images";
+const metadataFolderPath = "./build/randomNFT/metadata";
 let metadataBaseURI =
-  "https://gateway.pinata.cloud/ipfs/QmNcNgWVHbdvNcL4bB2weJytmtEb2A6NtB1mmFMZVTKZTd/";
+  "https://gateway.pinata.cloud/ipfs/QmWWPBxCvze7SKNRHLjs4m5Ekdf2rWFTHaYHLjxdJrQqMF/";
 
 module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const chainId = network.config.chainId;
+  let vrfCoordinatorV2Mock;
   let vrfCoordinatorV2Address;
   let subscriptionId;
 
   /**
-   * @dev 'metadataBaseURI' can be hardcoded and
+   * 'metadataBaseURI' can be hardcoded and
    * 'UPLOAD_TO_PINATA' can be set to false in '.env',
    * after running this deploy script once.
    */
@@ -32,13 +33,12 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     generateMetadata(imagesBaseURI, imagesFolderPath, metadataFolderPath);
     log("Uploading metadata folder to IPFS...");
     metadataBaseURI = await uploadMetadataFolder(metadataFolderPath);
-    log(metadataBaseURI);
+    log(`metadataBaseURI: ${metadataBaseURI}`);
+    log("______________________________________________________");
   }
 
   if (chainId === 31337) {
-    const vrfCoordinatorV2Mock = await ethers.getContract(
-      "VRFCoordinatorV2Mock"
-    );
+    vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock");
     vrfCoordinatorV2Address = vrfCoordinatorV2Mock.address;
     const txResponse = await vrfCoordinatorV2Mock.createSubscription();
     const txReceipt = await txResponse.wait(1);
@@ -68,6 +68,10 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     log: true,
     waitConfirmations: network.config.blockConfirmations,
   });
+
+  if (chainId === 31337) {
+    await vrfCoordinatorV2Mock.addConsumer(subscriptionId, randomNFT.address);
+  }
 
   if (chainId !== 31337 && process.env.ETHERSCAN_API_KEY) {
     await verify(randomNFT.address, arguments);

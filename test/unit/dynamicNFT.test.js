@@ -1,5 +1,5 @@
+const { ethers, network } = require("hardhat");
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
 const { parseUnits } = require("ethers/lib/utils");
 const { svgToBase64 } = require("../../utils/svgToBase64");
 const fs = require("fs");
@@ -55,7 +55,7 @@ network.config.chainId !== 31337
         beforeEach(async function () {
           const txResponse = await dynamicNFT.mintNFT(BULL_VALUE, BEAR_VALUE);
           const txReceipt = await txResponse.wait(1);
-          tokenId = txReceipt.events[1].args.tokenId;
+          tokenId = txReceipt.events[0].args.tokenId;
         });
 
         it("sets the token's bull & bear value correctly", async function () {
@@ -73,12 +73,6 @@ network.config.chainId !== 31337
           const tokenIdAfterMint = await dynamicNFT.getTokenCounter();
           expect(tokenIdAfterMint).to.equal(tokenId.add(1));
         });
-
-        it("emits 'NftMinted' event", async function () {
-          await expect(dynamicNFT.mintNFT(BULL_VALUE, BEAR_VALUE))
-            .to.emit(dynamicNFT, "NftMinted")
-            .withArgs(tokenId.add(1), deployer.address);
-        });
       });
 
       describe("tokenURI", function () {
@@ -86,7 +80,7 @@ network.config.chainId !== 31337
         beforeEach(async function () {
           const txResponse = await dynamicNFT.mintNFT(BULL_VALUE, BEAR_VALUE);
           const txReceipt = await txResponse.wait(1);
-          tokenId = txReceipt.events[1].args.tokenId;
+          tokenId = txReceipt.events[0].args.tokenId;
         });
 
         it("returns bull token URI if the price reach bull value of the token", async function () {

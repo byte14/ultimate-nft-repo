@@ -1,9 +1,10 @@
-const { network, ethers } = require("hardhat");
+const { network } = require("hardhat");
+const { parseUnits } = require("ethers/lib/utils");
 
-const BASE_FEE = ethers.utils.parseEther("0.25");
-const GAS_PRICE_LINK = 1e9;
+const BASE_FEE = parseUnits("0.25", 18);
+const GAS_PRICE_LINK = parseUnits("1", 9);
 const DECIMALS = 8;
-const INITIAL_ANSWER = 2000e8;
+const INITIAL_ANSWER = parseUnits("2000", 8);
 
 module.exports = async function ({ getNamedAccounts, deployments }) {
   const { deploy, log } = deployments;

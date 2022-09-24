@@ -1,17 +1,18 @@
-const { expect } = require("chai");
 const { deployments, ethers, network } = require("hardhat");
+const { expect } = require("chai");
 const { networkConfig } = require("../../helper-hardhat-config");
 
-const BASE_URI =
-  "https://gateway.pinata.cloud/ipfs/QmNcNgWVHbdvNcL4bB2weJytmtEb2A6NtB1mmFMZVTKZTd/";
 const chainId = network.config.chainId;
+const MINT_FEE = networkConfig[chainId].mintFee;
+const BASE_URI =
+  "https://gateway.pinata.cloud/ipfs/QmWWPBxCvze7SKNRHLjs4m5Ekdf2rWFTHaYHLjxdJrQqMF/";
 
 chainId !== 31337
   ? describe.skip
-  : describe("Random NFT Unit test", function () {
+  : describe("RandomNFT Unit Test", function () {
       let deployer;
+      let vrfCoordinatorV2Mock;
       let randomNFT;
-      const mintFee = networkConfig[chainId].mintFee;
 
       beforeEach(async function () {
         [deployer] = await ethers.getSigners();
@@ -30,24 +31,24 @@ chainId !== 31337
         });
 
         it("initializes the mint fee correctly", async function () {
-          expect(await randomNFT.getMintFee()).to.equal(mintFee);
+          expect(await randomNFT.getMintFee()).to.equal(MINT_FEE);
         });
       });
 
-      describe("requestNft", function () {
+      describe("requestNFT", function () {
         it("reverts if mint fee is not enough", async function () {
-          const sentFee = mintFee.sub(ethers.utils.parseEther("0.001"));
+          const sentFee = MINT_FEE.sub(ethers.utils.parseEther("0.001"));
           await expect(
-            randomNFT.requestNft({
+            randomNFT.requestNFT({
               value: sentFee,
             })
           )
             .to.be.revertedWithCustomError(randomNFT, "NotEnoughETH")
-            .withArgs(sentFee, mintFee);
+            .withArgs(sentFee, MINT_FEE);
         });
 
         it("emits 'NftRequested' event", async function () {
-          const txResponse = await randomNFT.requestNft({ value: mintFee });
+          const txResponse = await randomNFT.requestNFT({ value: MINT_FEE });
           const txReceipt = await txResponse.wait(1);
           const requestId = txReceipt.events[1].args.requestId;
           await expect(txResponse)
@@ -59,8 +60,8 @@ chainId !== 31337
       describe("fulfillRandomWords", function () {
         let requestId;
         beforeEach(async function () {
-          const txResponse = await randomNFT.requestNft({
-            value: mintFee,
+          const txResponse = await randomNFT.requestNFT({
+            value: MINT_FEE,
           });
           const txReceipt = await txResponse.wait(1);
           requestId = txReceipt.events[1].args.requestId;
@@ -98,7 +99,7 @@ chainId !== 31337
         it("emits 'NftMinted' event", async function () {
           const tokenId = await randomNFT.getTokenCounter();
           await expect(
-            await vrfCoordinatorV2Mock.fulfillRandomWords(
+            vrfCoordinatorV2Mock.fulfillRandomWords(
               requestId,
               randomNFT.address
             )
@@ -108,11 +109,13 @@ chainId !== 31337
         });
       });
 
-      describe("withdraw", function () {
+      describe("withdrawFee", function () {
         it("withdraws collected fee to the deployer address", async function () {
           const accounts = await ethers.getSigners();
           for (let i = 1; i < 5; i++) {
-            await randomNFT.connect(accounts[i]).requestNft({ value: mintFee });
+            await randomNFT
+              .connect(accounts[i])
+              .requestNFT({ value: MINT_FEE });
           }
           const randomNFTStartingBalance = await randomNFT.provider.getBalance(
             randomNFT.address
@@ -121,7 +124,7 @@ chainId !== 31337
             deployer.address
           );
 
-          const txResponse = await randomNFT.withdraw();
+          const txResponse = await randomNFT.withdrawFee();
           const txReceipt = await txResponse.wait(1);
           const { gasUsed, effectiveGasPrice } = txReceipt;
           const gasCost = gasUsed.mul(effectiveGasPrice);
@@ -141,27 +144,29 @@ chainId !== 31337
         it("reverts if withdrawer is not the deployer", async function () {
           const accounts = await ethers.getSigners();
           await expect(
-            randomNFT.connect(accounts[1]).withdraw()
+            randomNFT.connect(accounts[1]).withdrawFee()
           ).to.be.revertedWith("Ownable: caller is not the owner");
         });
       });
 
-      // To make this test passed, _getWarrior function need
-      // to be marked as public/external in randomNFT contract
-      describe("_getWarrior", function () {
-        it("should return PNS if warriorRarityRange is between 0 - 14", async function () {
-          const warrior = await randomNFT._getWarrior([9]);
-          expect(warrior).to.equal("0.json");
-        });
+      /**
+       * @dev To make this test passed, _getWarrior function need
+       * to be marked as public/external in randomNFT contract.
+       */
+      // describe("_getWarrior", function () {
+      //   it("should return PNS if warriorRarityRange is between 0 - 14", async function () {
+      //     const warrior = await randomNFT._getWarrior([9]);
+      //     expect(warrior).to.equal("0.json");
+      //   });
 
-        it("should return BK if warriorRarityRange is between 15 - 49", async function () {
-          const warrior = await randomNFT._getWarrior([40]);
-          expect(warrior).to.equal("1.json");
-        });
+      //   it("should return BK if warriorRarityRange is between 15 - 49", async function () {
+      //     const warrior = await randomNFT._getWarrior([40]);
+      //     expect(warrior).to.equal("1.json");
+      //   });
 
-        it("should return AST if warriorRarityRange is between 50 - 99", async function () {
-          const warrior = await randomNFT._getWarrior([95]);
-          expect(warrior).to.equal("2.json");
-        });
-      });
+      //   it("should return AST if warriorRarityRange is between 50 - 99", async function () {
+      //     const warrior = await randomNFT._getWarrior([95]);
+      //     expect(warrior).to.equal("2.json");
+      //   });
+      // });
     });

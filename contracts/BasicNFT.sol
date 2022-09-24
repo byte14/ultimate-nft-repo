@@ -11,11 +11,11 @@ contract BasicNFT is ERC721URIStorage {
 
     Counters.Counter private s_tokenCounter;
     string private constant TOKEN_URI =
-        "https://gateway.pinata.cloud/ipfs/QmNcNgWVHbdvNcL4bB2weJytmtEb2A6NtB1mmFMZVTKZTd/0.json";
+        "https://gateway.pinata.cloud/ipfs/QmQ7KnkdCefhLGkTuEfTAYWh8AXe6RhYUvv9YJjdTio1UW/01-Ingvild.jpg";
 
     constructor() ERC721("Warrior Club", "WRC") {}
 
-    function mintNft() external {
+    function mintNFT() external {
         uint256 newTokenId = s_tokenCounter.current();
         _safeMint(msg.sender, newTokenId);
         _setTokenURI(newTokenId, TOKEN_URI);
