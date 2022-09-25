@@ -5,7 +5,7 @@ async function withdrawFee() {
   const contractBalance = await randomNFT.provider.getBalance(
     randomNFT.address
   );
-  const txResponse = await randomNFT.withdraw();
+  const txResponse = await randomNFT.withdrawFee();
   await txResponse.wait(1);
   console.log(
     `${ethers.utils.formatEther(contractBalance)} ETH has been withdrawn`
