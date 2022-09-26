@@ -7,13 +7,25 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
+/**
+ * @dev Insufficent ETH sent for minting.
+ * @dev Needed 'required' but only 'sent' tranfer.
+ * @param sent amount transfer.
+ * @param required needed amount to transfer.
+ */
 error NotEnoughETH(uint256 sent, uint256 required);
 error WithdrawFailed();
 
+/**
+ * @title A Random NFT Contract
+ * @author Avishek Raj Panta
+ * @dev Implementation of ERC721 which mints Random NFT.
+ */
 contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     using Counters for Counters.Counter;
     using Strings for uint256;
 
+    /** State Variables **/
     Counters.Counter private s_tokenCounter;
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     uint256 private immutable i_mintFee;
@@ -25,11 +37,17 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
     string private constant BASE_EXTENSION = ".json";
     string private s_baseURI;
 
+    /** Mapping from reuestId to requestor address **/
     mapping(uint256 => address) private nftRequester;
 
+    /** Events **/
     event NftRequested(uint256 indexed requestId, address requester);
     event NftMinted(uint256 tokenId, address minter);
 
+    /**
+     * @dev Initializes token name, symbol, i_vrfCoordinator, i_mintFee,
+     * i_keyHash, i_subscriptionId, i_callbackGasLimit, s_baseURI.
+     */
     constructor(
         address vrfCoordinator,
         uint256 mintFee,
@@ -46,6 +64,10 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         s_baseURI = baseURI;
     }
 
+    /**
+     * @dev Submits the request to VRF Coordinator contract for random NFT.
+     * @dev Sent ETH value must be at least equal to i_mintFee.
+     */
     function requestNFT() external payable returns (uint256 requestId) {
         if (msg.value < i_mintFee) {
             revert NotEnoughETH(msg.value, i_mintFee);
@@ -61,6 +83,9 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         emit NftRequested(requestId, msg.sender);
     }
 
+    /**
+     * @dev Withdraws collected fee to the owner address.
+     */
     function withdrawFee() external onlyOwner {
         (bool success, ) = msg.sender.call{value: address(this).balance}("");
         if (!success) {
@@ -68,14 +93,27 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         }
     }
 
+    /**
+     * @dev Returns fee required for minting.
+     */
     function getMintFee() external view returns (uint256) {
         return i_mintFee;
     }
 
+    /**
+     * @dev Returns the current tokenId.
+     */
     function getTokenCounter() external view returns (uint256) {
         return s_tokenCounter.current();
     }
 
+    /**
+     * @dev Invoked by Chainlink VRF node to receive the random NFT
+     * @dev Mints NFT to requestor address.
+     * @dev Increments token counter.
+     * @param requestId the request to fulfill.
+     * @param randomWords array of random values.
+     */
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
         internal
         override
@@ -89,10 +127,21 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
         emit NftMinted(newTokenId, nftOwner);
     }
 
+    /**
+     * @dev Returns baseURI for computing tokenURI.
+     */
     function _baseURI() internal view override returns (string memory) {
         return s_baseURI;
     }
 
+    /**
+     * @dev Returns concatenation of warrior index & BASE_EXTENSION.
+     * @dev If warriorRarityRange is between:
+     * (0 - 14) get Ingvild (15%),
+     * (15 - 49) get Agnar (35%),
+     * (50 - 99) get Zander (50%).
+     * @param randomWords array of random values.
+     */
     function _getWarrior(uint256[] memory randomWords)
         private
         pure
@@ -104,12 +153,6 @@ contract RandomNFT is ERC721URIStorage, VRFConsumerBaseV2, Ownable {
 
         for (uint256 i = 0; i < warriorRarityWeight.length; i++) {
             if (warriorRarityRange < warriorRarityWeight[i]) {
-                /**
-                 * if warriorRarityRange:
-                 * (0 - 14) get Ingvild (15%),
-                 * (15 - 49) get Agnar (35%),
-                 * (50 - 99) get Zander (50%)
-                 */
                 warrior = string.concat(i.toString(), BASE_EXTENSION);
                 break;
             }
